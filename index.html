@@ -48,54 +48,90 @@
             </div>
 
             <div class="panel-content">
-                <!-- Element Selector -->
+                <!-- Mode Toggle -->
                 <div class="control-group">
-                    <label class="control-label">Element</label>
-                    <select id="element-select" class="control-select">
-                        <option value="1">1 — H (Hydrogen)</option>
-                        <option value="2">2 — He (Helium)</option>
-                        <option value="3">3 — Li (Lithium)</option>
-                        <option value="4">4 — Be (Beryllium)</option>
-                        <option value="5">5 — B (Boron)</option>
-                        <option value="6" selected>6 — C (Carbon)</option>
-                        <option value="7">7 — N (Nitrogen)</option>
-                        <option value="8">8 — O (Oxygen)</option>
-                        <option value="9">9 — F (Fluorine)</option>
-                        <option value="10">10 — Ne (Neon)</option>
-                        <option value="11">11 — Na (Sodium)</option>
-                        <option value="12">12 — Mg (Magnesium)</option>
-                        <option value="13">13 — Al (Aluminum)</option>
-                        <option value="14">14 — Si (Silicon)</option>
-                        <option value="15">15 — P (Phosphorus)</option>
-                        <option value="16">16 — S (Sulfur)</option>
-                        <option value="17">17 — Cl (Chlorine)</option>
-                        <option value="18">18 — Ar (Argon)</option>
-                        <option value="19">19 — K (Potassium)</option>
-                        <option value="20">20 — Ca (Calcium)</option>
-                        <option value="21">21 — Sc (Scandium)</option>
-                        <option value="22">22 — Ti (Titanium)</option>
-                        <option value="23">23 — V (Vanadium)</option>
-                        <option value="24">24 — Cr (Chromium)</option>
-                        <option value="25">25 — Mn (Manganese)</option>
-                        <option value="26">26 — Fe (Iron)</option>
-                        <option value="27">27 — Co (Cobalt)</option>
-                        <option value="28">28 — Ni (Nickel)</option>
-                        <option value="29">29 — Cu (Copper)</option>
-                        <option value="30">30 — Zn (Zinc)</option>
-                        <option value="31">31 — Ga (Gallium)</option>
-                        <option value="32">32 — Ge (Germanium)</option>
-                        <option value="33">33 — As (Arsenic)</option>
-                        <option value="34">34 — Se (Selenium)</option>
-                        <option value="35">35 — Br (Bromine)</option>
-                        <option value="36">36 — Kr (Krypton)</option>
-                    </select>
+                    <label class="control-label">Mode</label>
+                    <div class="mode-toggle">
+                        <button class="mode-btn active" data-mode="atom" id="mode-atom">⚛ Atom</button>
+                        <button class="mode-btn" data-mode="molecule" id="mode-molecule">🔗 Molecule</button>
+                    </div>
                 </div>
 
-                <!-- Highlight Subshell -->
-                <div class="control-group">
-                    <label class="control-label">Highlight Subshell</label>
-                    <div id="subshell-buttons" class="subshell-buttons">
-                        <!-- Populated by JS -->
+                <!-- Atom Mode Controls -->
+                <div id="atom-controls">
+                    <!-- Element Selector -->
+                    <div class="control-group">
+                        <label class="control-label">Element</label>
+                        <select id="element-select" class="control-select">
+                            <option value="1">1 — H (Hydrogen)</option>
+                            <option value="2">2 — He (Helium)</option>
+                            <option value="3">3 — Li (Lithium)</option>
+                            <option value="4">4 — Be (Beryllium)</option>
+                            <option value="5">5 — B (Boron)</option>
+                            <option value="6" selected>6 — C (Carbon)</option>
+                            <option value="7">7 — N (Nitrogen)</option>
+                            <option value="8">8 — O (Oxygen)</option>
+                            <option value="9">9 — F (Fluorine)</option>
+                            <option value="10">10 — Ne (Neon)</option>
+                            <option value="11">11 — Na (Sodium)</option>
+                            <option value="12">12 — Mg (Magnesium)</option>
+                            <option value="13">13 — Al (Aluminum)</option>
+                            <option value="14">14 — Si (Silicon)</option>
+                            <option value="15">15 — P (Phosphorus)</option>
+                            <option value="16">16 — S (Sulfur)</option>
+                            <option value="17">17 — Cl (Chlorine)</option>
+                            <option value="18">18 — Ar (Argon)</option>
+                            <option value="19">19 — K (Potassium)</option>
+                            <option value="20">20 — Ca (Calcium)</option>
+                            <option value="21">21 — Sc (Scandium)</option>
+                            <option value="22">22 — Ti (Titanium)</option>
+                            <option value="23">23 — V (Vanadium)</option>
+                            <option value="24">24 — Cr (Chromium)</option>
+                            <option value="25">25 — Mn (Manganese)</option>
+                            <option value="26">26 — Fe (Iron)</option>
+                            <option value="27">27 — Co (Cobalt)</option>
+                            <option value="28">28 — Ni (Nickel)</option>
+                            <option value="29">29 — Cu (Copper)</option>
+                            <option value="30">30 — Zn (Zinc)</option>
+                            <option value="31">31 — Ga (Gallium)</option>
+                            <option value="32">32 — Ge (Germanium)</option>
+                            <option value="33">33 — As (Arsenic)</option>
+                            <option value="34">34 — Se (Selenium)</option>
+                            <option value="35">35 — Br (Bromine)</option>
+                            <option value="36">36 — Kr (Krypton)</option>
+                        </select>
+                    </div>
+
+                    <!-- Highlight Subshell -->
+                    <div class="control-group">
+                        <label class="control-label">Highlight Subshell</label>
+                        <div id="subshell-buttons" class="subshell-buttons">
+                            <!-- Populated by JS -->
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Molecule Mode Controls -->
+                <div id="molecule-controls" style="display: none;">
+                    <div class="control-group">
+                        <label class="control-label">Molecule</label>
+                        <select id="molecule-select" class="control-select">
+                            <option value="H2">H₂ — Hydrogen</option>
+                            <option value="O2">O₂ — Oxygen</option>
+                            <option value="N2">N₂ — Nitrogen</option>
+                            <option value="H2O">H₂O — Water</option>
+                            <option value="CO2">CO₂ — Carbon Dioxide</option>
+                            <option value="NaCl">NaCl — Sodium Chloride</option>
+                            <option value="CH4">CH₄ — Methane</option>
+                            <option value="NH3">NH₃ — Ammonia</option>
+                        </select>
+                    </div>
+                    <div class="control-group">
+                        <label class="control-label">Bond Info</label>
+                        <div id="bond-info" class="bond-info">
+                            <strong>H₂ — Hydrogen</strong><br>
+                            Single covalent bond. Bond length: 74 pm.
+                        </div>
                     </div>
                 </div>
 

@@ -148,6 +148,8 @@ const ORBITAL_COLORS = {
 
 // ─── State ───────────────────────────────────────────────────────
 const state = {
+    mode: 'atom',            // 'atom' or 'molecule'
+    currentMolecule: 'H2',   // currently selected molecule preset
     elementZ: 6,
     cloudDensity: 1.0,
     nucleusScale: 1.0,
@@ -745,8 +747,359 @@ function createLabel(text, position, color) {
 
 
 // ═══════════════════════════════════════════════════════════════
+// MOLECULE PRESETS
+// ═══════════════════════════════════════════════════════════════
+
+const MOLECULES = {
+    H2: {
+        name: 'H₂ — Hydrogen',
+        atoms: [
+            { z: 1, pos: [-1.5, 0, 0] },
+            { z: 1, pos: [1.5, 0, 0] },
+        ],
+        bonds: [{ from: 0, to: 1, order: 1, type: 'covalent' }],
+        info: 'Single covalent bond. Bond length: 74 pm.',
+    },
+    O2: {
+        name: 'O₂ — Oxygen',
+        atoms: [
+            { z: 8, pos: [-2.0, 0, 0] },
+            { z: 8, pos: [2.0, 0, 0] },
+        ],
+        bonds: [{ from: 0, to: 1, order: 2, type: 'covalent' }],
+        info: 'Double covalent bond. Bond length: 121 pm.',
+    },
+    N2: {
+        name: 'N₂ — Nitrogen',
+        atoms: [
+            { z: 7, pos: [-1.8, 0, 0] },
+            { z: 7, pos: [1.8, 0, 0] },
+        ],
+        bonds: [{ from: 0, to: 1, order: 3, type: 'covalent' }],
+        info: 'Triple covalent bond. Bond length: 110 pm. Very strong.',
+    },
+    H2O: {
+        name: 'H₂O — Water',
+        atoms: [
+            { z: 8, pos: [0, 0.4, 0] },          // O center
+            { z: 1, pos: [-2.0, -1.2, 0] },       // H left (104.5° angle)
+            { z: 1, pos: [2.0, -1.2, 0] },        // H right
+        ],
+        bonds: [
+            { from: 0, to: 1, order: 1, type: 'polar' },
+            { from: 0, to: 2, order: 1, type: 'polar' },
+        ],
+        info: 'Bent geometry (104.5°). Polar covalent bonds.',
+    },
+    CO2: {
+        name: 'CO₂ — Carbon Dioxide',
+        atoms: [
+            { z: 6, pos: [0, 0, 0] },             // C center
+            { z: 8, pos: [-3.0, 0, 0] },           // O left
+            { z: 8, pos: [3.0, 0, 0] },            // O right
+        ],
+        bonds: [
+            { from: 0, to: 1, order: 2, type: 'polar' },
+            { from: 0, to: 2, order: 2, type: 'polar' },
+        ],
+        info: 'Linear geometry (180°). Double polar covalent bonds.',
+    },
+    NaCl: {
+        name: 'NaCl — Sodium Chloride',
+        atoms: [
+            { z: 11, pos: [-2.5, 0, 0] },         // Na
+            { z: 17, pos: [2.5, 0, 0] },           // Cl
+        ],
+        bonds: [{ from: 0, to: 1, order: 1, type: 'ionic' }],
+        info: 'Ionic bond. Electron transferred from Na to Cl.',
+    },
+    CH4: {
+        name: 'CH₄ — Methane',
+        atoms: [
+            { z: 6, pos: [0, 0, 0] },             // C center
+            { z: 1, pos: [2.2, 2.2, 2.2] },       // H — tetrahedral vertices
+            { z: 1, pos: [2.2, -2.2, -2.2] },
+            { z: 1, pos: [-2.2, 2.2, -2.2] },
+            { z: 1, pos: [-2.2, -2.2, 2.2] },
+        ],
+        bonds: [
+            { from: 0, to: 1, order: 1, type: 'covalent' },
+            { from: 0, to: 2, order: 1, type: 'covalent' },
+            { from: 0, to: 3, order: 1, type: 'covalent' },
+            { from: 0, to: 4, order: 1, type: 'covalent' },
+        ],
+        info: 'Tetrahedral geometry (109.5°). Four single covalent bonds.',
+    },
+    NH3: {
+        name: 'NH₃ — Ammonia',
+        atoms: [
+            { z: 7, pos: [0, 0.8, 0] },           // N center (slightly elevated)
+            { z: 1, pos: [-2.0, -1.0, 1.15] },    // H — trigonal pyramidal
+            { z: 1, pos: [2.0, -1.0, 1.15] },
+            { z: 1, pos: [0, -1.0, -2.3] },
+        ],
+        bonds: [
+            { from: 0, to: 1, order: 1, type: 'polar' },
+            { from: 0, to: 2, order: 1, type: 'polar' },
+            { from: 0, to: 3, order: 1, type: 'polar' },
+        ],
+        info: 'Trigonal pyramidal (107°). Polar covalent bonds. Has lone pair.',
+    },
+};
+
+
+// ═══════════════════════════════════════════════════════════════
+// BOND RENDERERS
+// ═══════════════════════════════════════════════════════════════
+
+/**
+ * Build a glowing cylinder bond between two 3D positions.
+ * Supports single, double, and triple bonds with color-coded types.
+ */
+function buildBondCylinder(posA, posB, order, type) {
+    const group = new THREE.Group();
+
+    // Bond colors by type
+    const bondColors = {
+        covalent: 0x88ccff,
+        polar: 0xffaa44,
+        ionic: 0xffee44,
+    };
+    const color = bondColors[type] || bondColors.covalent;
+
+    const dir = new THREE.Vector3().subVectors(posB, posA);
+    const length = dir.length();
+    const mid = new THREE.Vector3().addVectors(posA, posB).multiplyScalar(0.5);
+
+    // Offsets for multi-bond rendering
+    const offsets = [];
+    if (order === 1) {
+        offsets.push(new THREE.Vector3(0, 0, 0));
+    } else if (order === 2) {
+        const perp = new THREE.Vector3(0, 1, 0);
+        if (Math.abs(dir.dot(perp)) / length > 0.9) perp.set(1, 0, 0);
+        const offset = new THREE.Vector3().crossVectors(dir, perp).normalize().multiplyScalar(0.15);
+        offsets.push(offset.clone(), offset.clone().negate());
+    } else if (order === 3) {
+        const perp = new THREE.Vector3(0, 1, 0);
+        if (Math.abs(dir.dot(perp)) / length > 0.9) perp.set(1, 0, 0);
+        const offset = new THREE.Vector3().crossVectors(dir, perp).normalize().multiplyScalar(0.2);
+        offsets.push(new THREE.Vector3(0, 0, 0), offset.clone(), offset.clone().negate());
+    }
+
+    const radius = order === 1 ? 0.06 : 0.04;
+
+    offsets.forEach(offset => {
+        const geo = new THREE.CylinderGeometry(radius, radius, length, 8, 1);
+        const mat = new THREE.MeshPhongMaterial({
+            color: color,
+            emissive: color,
+            emissiveIntensity: 0.6,
+            transparent: true,
+            opacity: 0.7,
+            shininess: 80,
+        });
+
+        const cyl = new THREE.Mesh(geo, mat);
+        cyl.position.copy(mid).add(offset);
+
+        // Orient cylinder along the bond direction
+        const axis = new THREE.Vector3(0, 1, 0);
+        const quat = new THREE.Quaternion().setFromUnitVectors(axis, dir.clone().normalize());
+        cyl.quaternion.copy(quat);
+
+        cyl.userData = { isBond: true, type, order };
+        group.add(cyl);
+
+        // Glow around bond
+        const glowGeo = new THREE.CylinderGeometry(radius * 3, radius * 3, length, 8, 1);
+        const glowMat = new THREE.MeshBasicMaterial({
+            color: color,
+            transparent: true,
+            opacity: 0.08,
+            side: THREE.DoubleSide,
+        });
+        const glow = new THREE.Mesh(glowGeo, glowMat);
+        glow.position.copy(mid).add(offset);
+        glow.quaternion.copy(quat);
+        group.add(glow);
+    });
+
+    return group;
+}
+
+/**
+ * Build a shared electron cloud in the overlap region between two bonded atoms.
+ * Particles are concentrated along the bond axis with Gaussian falloff.
+ */
+function buildBondCloud(posA, posB, order) {
+    const dir = new THREE.Vector3().subVectors(posB, posA);
+    const length = dir.length();
+    const mid = new THREE.Vector3().addVectors(posA, posB).multiplyScalar(0.5);
+    const dirNorm = dir.clone().normalize();
+
+    const particleCount = Math.round(order * 1500 * state.cloudDensity);
+    const posArray = new Float32Array(particleCount * 3);
+    const colArray = new Float32Array(particleCount * 3);
+    const basePos = new Float32Array(particleCount * 3);
+
+    for (let i = 0; i < particleCount; i++) {
+        // Along bond axis: concentrate in the middle 60%
+        const t = (Math.random() - 0.5) * length * 0.7;
+
+        // Perpendicular spread: narrow Gaussian
+        const spreadRadius = 0.3 + order * 0.1;
+        const angle = Math.random() * Math.PI * 2;
+        const r = spreadRadius * Math.sqrt(-2 * Math.log(Math.random() + 0.001));
+
+        // Create basis vectors perpendicular to bond
+        const up = new THREE.Vector3(0, 1, 0);
+        if (Math.abs(dirNorm.dot(up)) > 0.9) up.set(1, 0, 0);
+        const perp1 = new THREE.Vector3().crossVectors(dirNorm, up).normalize();
+        const perp2 = new THREE.Vector3().crossVectors(dirNorm, perp1).normalize();
+
+        const px = mid.x + dirNorm.x * t + perp1.x * r * Math.cos(angle) + perp2.x * r * Math.sin(angle);
+        const py = mid.y + dirNorm.y * t + perp1.y * r * Math.cos(angle) + perp2.y * r * Math.sin(angle);
+        const pz = mid.z + dirNorm.z * t + perp1.z * r * Math.cos(angle) + perp2.z * r * Math.sin(angle);
+
+        posArray[i * 3] = px;
+        posArray[i * 3 + 1] = py;
+        posArray[i * 3 + 2] = pz;
+        basePos[i * 3] = px;
+        basePos[i * 3 + 1] = py;
+        basePos[i * 3 + 2] = pz;
+
+        // Heatmap color — density peaks at center of bond
+        const distFromCenter = Math.abs(t) / (length * 0.35);
+        const density = Math.pow(Math.max(0, 1 - distFromCenter), 0.8);
+        const heatColor = densityToHeatmap(density);
+        colArray[i * 3] = heatColor.r;
+        colArray[i * 3 + 1] = heatColor.g;
+        colArray[i * 3 + 2] = heatColor.b;
+    }
+
+    const geo = new THREE.BufferGeometry();
+    geo.setAttribute('position', new THREE.BufferAttribute(posArray, 3));
+    geo.setAttribute('color', new THREE.BufferAttribute(colArray, 3));
+
+    const mat = new THREE.PointsMaterial({
+        size: 0.06,
+        map: dotTexture,
+        vertexColors: true,
+        transparent: true,
+        opacity: 0.75,
+        sizeAttenuation: true,
+        blending: THREE.AdditiveBlending,
+        depthWrite: false,
+    });
+
+    const points = new THREE.Points(geo, mat);
+    points.userData = { isBondCloud: true };
+    return { points, basePositions: basePos };
+}
+
+
+// ═══════════════════════════════════════════════════════════════
+// MOLECULE REBUILD
+// ═══════════════════════════════════════════════════════════════
+
+function rebuildMolecule() {
+    // Clear everything
+    while (atomGroup.children.length > 0) {
+        const child = atomGroup.children[0];
+        atomGroup.remove(child);
+        disposeObject(child);
+    }
+    orbitalClouds = [];
+    labelSprites = [];
+
+    const mol = MOLECULES[state.currentMolecule];
+    if (!mol) return;
+
+    const scheme = ORBITAL_COLORS[state.colorScheme];
+
+    // ─ Place each atom ─
+    mol.atoms.forEach((atom, idx) => {
+        const element = ELEMENTS[atom.z];
+        if (!element) return;
+        const offset = new THREE.Vector3(atom.pos[0], atom.pos[1], atom.pos[2]);
+
+        // Nucleus
+        const nucleus = buildNucleus(element.z, element.neutrons, scheme);
+        nucleus.scale.setScalar(state.nucleusScale * 0.7); // slightly smaller in molecule view
+        nucleus.position.copy(offset);
+        atomGroup.add(nucleus);
+
+        // Orbital clouds for this atom
+        const config = getElectronConfiguration(atom.z);
+        config.forEach(sub => {
+            let electronsLeft = sub.electrons;
+            for (let ml = -sub.l; ml <= sub.l; ml++) {
+                const eInThis = Math.min(electronsLeft, 2);
+                if (eInThis <= 0) break;
+                electronsLeft -= eInThis;
+
+                const densityMult = state.cloudDensity * 0.5; // reduced density for clarity
+                const { points, basePositions } = buildOrbitalCloud(sub.n, sub.l, ml, eInThis, densityMult);
+                points.position.copy(offset); // offset to atom position
+                points.material.opacity = 0.45; // semi-transparent so bonds are visible
+                atomGroup.add(points);
+                orbitalClouds.push({ points, basePositions, label: sub.label, n: sub.n, l: sub.l, ml });
+            }
+        });
+
+        // Atom label
+        if (state.showLabels) {
+            const labelPos = offset.clone().add(new THREE.Vector3(0, -1.5, 0));
+            const label = createLabel(element.symbol, labelPos, '#e2e8f0');
+            atomGroup.add(label);
+            labelSprites.push(label);
+        }
+    });
+
+    // ─ Bonds ─
+    mol.bonds.forEach(bond => {
+        const posA = new THREE.Vector3(...mol.atoms[bond.from].pos);
+        const posB = new THREE.Vector3(...mol.atoms[bond.to].pos);
+
+        // Bond cylinder
+        const bondGroup = buildBondCylinder(posA, posB, bond.order, bond.type);
+        atomGroup.add(bondGroup);
+
+        // Shared electron cloud in overlap
+        const { points: bondCloud, basePositions: bondBasePos } = buildBondCloud(posA, posB, bond.order);
+        atomGroup.add(bondCloud);
+        orbitalClouds.push({ points: bondCloud, basePositions: bondBasePos, label: 'bond', n: 1, l: 0, ml: 0 });
+    });
+
+    // ─ Update UI ─
+    const firstElement = ELEMENTS[mol.atoms[0].z];
+    document.getElementById('element-symbol').textContent = state.currentMolecule;
+    document.getElementById('element-name').textContent = mol.name.split(' — ')[1] || mol.name;
+    document.getElementById('electron-config-text').textContent = mol.info;
+
+    // Update bond info panel
+    const bondInfo = document.getElementById('bond-info');
+    if (bondInfo) {
+        bondInfo.innerHTML = `<strong>${mol.name}</strong><br>${mol.info}`;
+        bondInfo.style.display = 'block';
+    }
+
+    // Auto-frame the molecule
+    const box = new THREE.Box3().setFromObject(atomGroup);
+    const center = box.getCenter(new THREE.Vector3());
+    const size = box.getSize(new THREE.Vector3());
+    const maxDim = Math.max(size.x, size.y, size.z);
+    camera.position.set(center.x + maxDim * 1.5, center.y + maxDim, center.z + maxDim * 1.5);
+    controls.target.copy(center);
+    controls.update();
+}
+
+
+// ═══════════════════════════════════════════════════════════════
 // MAIN REBUILD
 // ═══════════════════════════════════════════════════════════════
+
 
 function rebuildAtom() {
     // Clear
@@ -1103,6 +1456,12 @@ renderer.domElement.addEventListener('click', (event) => {
                     mₗ = ${d.ml}<br>
                     Electrons: ${d.electronCount}<br>
                     Shape: ${['Spherical', 'Dumbbell', 'Cloverleaf', 'Multi-lobe'][d.l]}`;
+        } else if (hit.userData.isBond) {
+            const orderNames = { 1: 'Single', 2: 'Double', 3: 'Triple' };
+            const typeNames = { covalent: 'Covalent', polar: 'Polar Covalent', ionic: 'Ionic' };
+            info = `<strong>${orderNames[hit.userData.order] || ''} ${typeNames[hit.userData.type] || ''} Bond</strong><br>
+                    Bond Order: ${hit.userData.order}<br>
+                    Type: ${typeNames[hit.userData.type] || hit.userData.type}`;
         }
 
         if (info) {
@@ -1122,6 +1481,45 @@ renderer.domElement.addEventListener('click', (event) => {
 // UI CONTROLS
 // ═══════════════════════════════════════════════════════════════
 
+// Helper: rebuild based on current mode
+function rebuild() {
+    if (state.mode === 'molecule') {
+        rebuildMolecule();
+    } else {
+        rebuildAtom();
+    }
+}
+
+// Mode toggle
+document.querySelectorAll('.mode-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+        document.querySelectorAll('.mode-btn').forEach(b => b.classList.remove('active'));
+        btn.classList.add('active');
+        state.mode = btn.dataset.mode;
+
+        // Toggle visibility of mode-specific controls
+        document.getElementById('atom-controls').style.display = state.mode === 'atom' ? 'block' : 'none';
+        document.getElementById('molecule-controls').style.display = state.mode === 'molecule' ? 'block' : 'none';
+
+        // Reset camera to default when switching to atom mode
+        if (state.mode === 'atom') {
+            camera.position.set(14, 10, 14);
+            controls.target.set(0, 0, 0);
+            controls.update();
+            const bondInfo = document.getElementById('bond-info');
+            if (bondInfo) bondInfo.style.display = '';
+        }
+
+        rebuild();
+    });
+});
+
+// Molecule selector
+document.getElementById('molecule-select').addEventListener('change', e => {
+    state.currentMolecule = e.target.value;
+    rebuildMolecule();
+});
+
 // Element selector
 document.getElementById('element-select').addEventListener('change', e => {
     state.elementZ = parseInt(e.target.value);
@@ -1133,7 +1531,7 @@ document.getElementById('element-select').addEventListener('change', e => {
 document.getElementById('cloud-density').addEventListener('input', e => {
     state.cloudDensity = parseFloat(e.target.value);
     document.getElementById('density-display').textContent = state.cloudDensity.toFixed(1) + 'x';
-    rebuildAtom();
+    rebuild();
 });
 
 // Animation speed
@@ -1152,15 +1550,15 @@ document.getElementById('nucleus-size').addEventListener('input', e => {
 // Toggles
 document.getElementById('show-labels').addEventListener('change', e => {
     state.showLabels = e.target.checked;
-    rebuildAtom();
+    rebuild();
 });
 document.getElementById('glow-effects').addEventListener('change', e => {
     state.glowEffects = e.target.checked;
-    rebuildAtom();
+    rebuild();
 });
 document.getElementById('show-individual').addEventListener('change', e => {
     state.showIndividualOrbitals = e.target.checked;
-    rebuildAtom();
+    rebuild();
 });
 
 // Color scheme
@@ -1170,7 +1568,7 @@ document.querySelectorAll('.color-btn').forEach(btn => {
         btn.classList.add('active');
         state.colorScheme = btn.dataset.scheme;
         scene.background = new THREE.Color(ORBITAL_COLORS[state.colorScheme].bg);
-        rebuildAtom();
+        rebuild();
     });
 });
 
@@ -1180,7 +1578,7 @@ document.getElementById('reset-view').addEventListener('click', () => {
     controls.target.set(0, 0, 0);
     controls.update();
     state.highlightSubshell = 'all';
-    rebuildAtom();
+    rebuild();
 });
 
 // Panel toggle
