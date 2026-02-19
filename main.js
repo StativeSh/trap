@@ -935,39 +935,48 @@ function buildBondCylinder(posA, posB, order, type) {
 function buildBondCloud(posA, posB, order) {
     const dir = new THREE.Vector3().subVectors(posB, posA);
     const length = dir.length();
+    if (length < 0.001) return null; // degenerate bond
     const mid = new THREE.Vector3().addVectors(posA, posB).multiplyScalar(0.5);
     const dirNorm = dir.clone().normalize();
 
-    const particleCount = Math.round(order * 1500 * state.cloudDensity);
+    // Create basis vectors perpendicular to bond (only compute once)
+    const up = new THREE.Vector3(0, 1, 0);
+    if (Math.abs(dirNorm.dot(up)) > 0.9) up.set(1, 0, 0);
+    const perp1 = new THREE.Vector3().crossVectors(dirNorm, up).normalize();
+    const perp2 = new THREE.Vector3().crossVectors(dirNorm, perp1).normalize();
+
+    const particleCount = Math.round(order * 2000 * state.cloudDensity);
     const posArray = new Float32Array(particleCount * 3);
     const colArray = new Float32Array(particleCount * 3);
     const basePos = new Float32Array(particleCount * 3);
 
     for (let i = 0; i < particleCount; i++) {
-        // Along bond axis: concentrate in the middle 60%
+        // Along bond axis: concentrate in the middle 70%
         const t = (Math.random() - 0.5) * length * 0.7;
 
-        // Perpendicular spread: narrow Gaussian
-        const spreadRadius = 0.3 + order * 0.1;
+        // Perpendicular spread: narrow Gaussian (clamped to avoid NaN)
+        const spreadRadius = 0.25 + order * 0.08;
         const angle = Math.random() * Math.PI * 2;
-        const r = spreadRadius * Math.sqrt(-2 * Math.log(Math.random() + 0.001));
-
-        // Create basis vectors perpendicular to bond
-        const up = new THREE.Vector3(0, 1, 0);
-        if (Math.abs(dirNorm.dot(up)) > 0.9) up.set(1, 0, 0);
-        const perp1 = new THREE.Vector3().crossVectors(dirNorm, up).normalize();
-        const perp2 = new THREE.Vector3().crossVectors(dirNorm, perp1).normalize();
+        const safeRand = Math.max(1e-6, Math.random()); // prevent log(0)
+        const r = Math.min(spreadRadius * Math.sqrt(-2 * Math.log(safeRand)), spreadRadius * 3);
 
         const px = mid.x + dirNorm.x * t + perp1.x * r * Math.cos(angle) + perp2.x * r * Math.sin(angle);
         const py = mid.y + dirNorm.y * t + perp1.y * r * Math.cos(angle) + perp2.y * r * Math.sin(angle);
         const pz = mid.z + dirNorm.z * t + perp1.z * r * Math.cos(angle) + perp2.z * r * Math.sin(angle);
 
-        posArray[i * 3] = px;
-        posArray[i * 3 + 1] = py;
-        posArray[i * 3 + 2] = pz;
-        basePos[i * 3] = px;
-        basePos[i * 3 + 1] = py;
-        basePos[i * 3 + 2] = pz;
+        // NaN safety check
+        if (!isFinite(px) || !isFinite(py) || !isFinite(pz)) {
+            posArray[i * 3] = mid.x;
+            posArray[i * 3 + 1] = mid.y;
+            posArray[i * 3 + 2] = mid.z;
+        } else {
+            posArray[i * 3] = px;
+            posArray[i * 3 + 1] = py;
+            posArray[i * 3 + 2] = pz;
+        }
+        basePos[i * 3] = posArray[i * 3];
+        basePos[i * 3 + 1] = posArray[i * 3 + 1];
+        basePos[i * 3 + 2] = posArray[i * 3 + 2];
 
         // Heatmap color — density peaks at center of bond
         const distFromCenter = Math.abs(t) / (length * 0.35);
@@ -983,11 +992,11 @@ function buildBondCloud(posA, posB, order) {
     geo.setAttribute('color', new THREE.BufferAttribute(colArray, 3));
 
     const mat = new THREE.PointsMaterial({
-        size: 0.06,
+        size: 0.07,
         map: dotTexture,
         vertexColors: true,
         transparent: true,
-        opacity: 0.75,
+        opacity: 0.8,
         sizeAttenuation: true,
         blending: THREE.AdditiveBlending,
         depthWrite: false,
@@ -1018,6 +1027,26 @@ function rebuildMolecule() {
 
     const scheme = ORBITAL_COLORS[state.colorScheme];
 
+    // ─ Compute molecule center and extent from atom positions ─
+    let cx = 0, cy = 0, cz = 0, maxDist = 0;
+    mol.atoms.forEach(atom => {
+        cx += atom.pos[0];
+        cy += atom.pos[1];
+        cz += atom.pos[2];
+    });
+    cx /= mol.atoms.length;
+    cy /= mol.atoms.length;
+    cz /= mol.atoms.length;
+    const molCenter = new THREE.Vector3(cx, cy, cz);
+
+    mol.atoms.forEach(atom => {
+        const dx = atom.pos[0] - cx, dy = atom.pos[1] - cy, dz = atom.pos[2] - cz;
+        const dist = Math.sqrt(dx * dx + dy * dy + dz * dz);
+        if (dist > maxDist) maxDist = dist;
+    });
+    // Add padding for orbital clouds
+    maxDist = Math.max(maxDist + 4, 6);
+
     // ─ Place each atom ─
     mol.atoms.forEach((atom, idx) => {
         const element = ELEMENTS[atom.z];
@@ -1026,7 +1055,7 @@ function rebuildMolecule() {
 
         // Nucleus
         const nucleus = buildNucleus(element.z, element.neutrons, scheme);
-        nucleus.scale.setScalar(state.nucleusScale * 0.7); // slightly smaller in molecule view
+        nucleus.scale.setScalar(state.nucleusScale * 0.7);
         nucleus.position.copy(offset);
         atomGroup.add(nucleus);
 
@@ -1039,10 +1068,10 @@ function rebuildMolecule() {
                 if (eInThis <= 0) break;
                 electronsLeft -= eInThis;
 
-                const densityMult = state.cloudDensity * 0.5; // reduced density for clarity
+                const densityMult = state.cloudDensity * 0.4;
                 const { points, basePositions } = buildOrbitalCloud(sub.n, sub.l, ml, eInThis, densityMult);
-                points.position.copy(offset); // offset to atom position
-                points.material.opacity = 0.45; // semi-transparent so bonds are visible
+                points.position.copy(offset);
+                points.material.opacity = 0.35;
                 atomGroup.add(points);
                 orbitalClouds.push({ points, basePositions, label: sub.label, n: sub.n, l: sub.l, ml });
             }
@@ -1067,31 +1096,32 @@ function rebuildMolecule() {
         atomGroup.add(bondGroup);
 
         // Shared electron cloud in overlap
-        const { points: bondCloud, basePositions: bondBasePos } = buildBondCloud(posA, posB, bond.order);
-        atomGroup.add(bondCloud);
-        orbitalClouds.push({ points: bondCloud, basePositions: bondBasePos, label: 'bond', n: 1, l: 0, ml: 0 });
+        const result = buildBondCloud(posA, posB, bond.order);
+        if (result) {
+            atomGroup.add(result.points);
+            orbitalClouds.push({ points: result.points, basePositions: result.basePositions, label: 'bond', n: 1, l: 0, ml: 0 });
+        }
     });
 
     // ─ Update UI ─
-    const firstElement = ELEMENTS[mol.atoms[0].z];
     document.getElementById('element-symbol').textContent = state.currentMolecule;
     document.getElementById('element-name').textContent = mol.name.split(' — ')[1] || mol.name;
     document.getElementById('electron-config-text').textContent = mol.info;
 
-    // Update bond info panel
     const bondInfo = document.getElementById('bond-info');
     if (bondInfo) {
         bondInfo.innerHTML = `<strong>${mol.name}</strong><br>${mol.info}`;
         bondInfo.style.display = 'block';
     }
 
-    // Auto-frame the molecule
-    const box = new THREE.Box3().setFromObject(atomGroup);
-    const center = box.getCenter(new THREE.Vector3());
-    const size = box.getSize(new THREE.Vector3());
-    const maxDim = Math.max(size.x, size.y, size.z);
-    camera.position.set(center.x + maxDim * 1.5, center.y + maxDim, center.z + maxDim * 1.5);
-    controls.target.copy(center);
+    // ─ Camera: deterministic framing from atom positions ─
+    const camDist = maxDist * 2.2;
+    camera.position.set(
+        molCenter.x + camDist * 0.7,
+        molCenter.y + camDist * 0.5,
+        molCenter.z + camDist * 0.7
+    );
+    controls.target.copy(molCenter);
     controls.update();
 }
 
