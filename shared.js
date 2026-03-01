@@ -1,0 +1,160 @@
+// ============================================
+//  ChemVerse — Shared Element Data & Utilities
+//  All 118 elements with periodic table positions
+// ============================================
+
+const ELEMENT_CATEGORIES = {
+    'alkali-metal': { label: 'Alkali Metal', color: '#ff6b6b', glow: 'rgba(255,107,107,0.3)' },
+    'alkaline-earth': { label: 'Alkaline Earth', color: '#ffa94d', glow: 'rgba(255,169,77,0.3)' },
+    'transition-metal': { label: 'Transition Metal', color: '#4dabf7', glow: 'rgba(77,171,247,0.3)' },
+    'post-transition': { label: 'Post-Transition', color: '#69db7c', glow: 'rgba(105,219,124,0.3)' },
+    'metalloid': { label: 'Metalloid', color: '#845ef7', glow: 'rgba(132,94,247,0.3)' },
+    'nonmetal': { label: 'Reactive Nonmetal', color: '#ffd43b', glow: 'rgba(255,212,59,0.3)' },
+    'halogen': { label: 'Halogen', color: '#38d9a9', glow: 'rgba(56,217,169,0.3)' },
+    'noble-gas': { label: 'Noble Gas', color: '#74c0fc', glow: 'rgba(116,192,252,0.3)' },
+    'lanthanide': { label: 'Lanthanide', color: '#f783ac', glow: 'rgba(247,131,172,0.3)' },
+    'actinide': { label: 'Actinide', color: '#da77f2', glow: 'rgba(218,119,242,0.3)' },
+    'unknown': { label: 'Unknown', color: '#868e96', glow: 'rgba(134,142,150,0.3)' },
+};
+
+// Full 118-element dataset
+// row/col = periodic table grid position (1-indexed)
+// row 8/9 = lanthanide/actinide rows displayed separately
+const ALL_ELEMENTS = [
+    // ─── Period 1 ───
+    { z: 1, symbol: 'H', name: 'Hydrogen', mass: 1.008, category: 'nonmetal', row: 1, col: 1, neutrons: 0 },
+    { z: 2, symbol: 'He', name: 'Helium', mass: 4.003, category: 'noble-gas', row: 1, col: 18, neutrons: 2 },
+    // ─── Period 2 ───
+    { z: 3, symbol: 'Li', name: 'Lithium', mass: 6.941, category: 'alkali-metal', row: 2, col: 1, neutrons: 4 },
+    { z: 4, symbol: 'Be', name: 'Beryllium', mass: 9.012, category: 'alkaline-earth', row: 2, col: 2, neutrons: 5 },
+    { z: 5, symbol: 'B', name: 'Boron', mass: 10.81, category: 'metalloid', row: 2, col: 13, neutrons: 6 },
+    { z: 6, symbol: 'C', name: 'Carbon', mass: 12.01, category: 'nonmetal', row: 2, col: 14, neutrons: 6 },
+    { z: 7, symbol: 'N', name: 'Nitrogen', mass: 14.01, category: 'nonmetal', row: 2, col: 15, neutrons: 7 },
+    { z: 8, symbol: 'O', name: 'Oxygen', mass: 16.00, category: 'nonmetal', row: 2, col: 16, neutrons: 8 },
+    { z: 9, symbol: 'F', name: 'Fluorine', mass: 19.00, category: 'halogen', row: 2, col: 17, neutrons: 10 },
+    { z: 10, symbol: 'Ne', name: 'Neon', mass: 20.18, category: 'noble-gas', row: 2, col: 18, neutrons: 10 },
+    // ─── Period 3 ───
+    { z: 11, symbol: 'Na', name: 'Sodium', mass: 22.99, category: 'alkali-metal', row: 3, col: 1, neutrons: 12 },
+    { z: 12, symbol: 'Mg', name: 'Magnesium', mass: 24.31, category: 'alkaline-earth', row: 3, col: 2, neutrons: 12 },
+    { z: 13, symbol: 'Al', name: 'Aluminium', mass: 26.98, category: 'post-transition', row: 3, col: 13, neutrons: 14 },
+    { z: 14, symbol: 'Si', name: 'Silicon', mass: 28.09, category: 'metalloid', row: 3, col: 14, neutrons: 14 },
+    { z: 15, symbol: 'P', name: 'Phosphorus', mass: 30.97, category: 'nonmetal', row: 3, col: 15, neutrons: 16 },
+    { z: 16, symbol: 'S', name: 'Sulfur', mass: 32.07, category: 'nonmetal', row: 3, col: 16, neutrons: 16 },
+    { z: 17, symbol: 'Cl', name: 'Chlorine', mass: 35.45, category: 'halogen', row: 3, col: 17, neutrons: 18 },
+    { z: 18, symbol: 'Ar', name: 'Argon', mass: 39.95, category: 'noble-gas', row: 3, col: 18, neutrons: 22 },
+    // ─── Period 4 ───
+    { z: 19, symbol: 'K', name: 'Potassium', mass: 39.10, category: 'alkali-metal', row: 4, col: 1, neutrons: 20 },
+    { z: 20, symbol: 'Ca', name: 'Calcium', mass: 40.08, category: 'alkaline-earth', row: 4, col: 2, neutrons: 20 },
+    { z: 21, symbol: 'Sc', name: 'Scandium', mass: 44.96, category: 'transition-metal', row: 4, col: 3, neutrons: 24 },
+    { z: 22, symbol: 'Ti', name: 'Titanium', mass: 47.87, category: 'transition-metal', row: 4, col: 4, neutrons: 26 },
+    { z: 23, symbol: 'V', name: 'Vanadium', mass: 50.94, category: 'transition-metal', row: 4, col: 5, neutrons: 28 },
+    { z: 24, symbol: 'Cr', name: 'Chromium', mass: 52.00, category: 'transition-metal', row: 4, col: 6, neutrons: 28 },
+    { z: 25, symbol: 'Mn', name: 'Manganese', mass: 54.94, category: 'transition-metal', row: 4, col: 7, neutrons: 30 },
+    { z: 26, symbol: 'Fe', name: 'Iron', mass: 55.85, category: 'transition-metal', row: 4, col: 8, neutrons: 30 },
+    { z: 27, symbol: 'Co', name: 'Cobalt', mass: 58.93, category: 'transition-metal', row: 4, col: 9, neutrons: 32 },
+    { z: 28, symbol: 'Ni', name: 'Nickel', mass: 58.69, category: 'transition-metal', row: 4, col: 10, neutrons: 31 },
+    { z: 29, symbol: 'Cu', name: 'Copper', mass: 63.55, category: 'transition-metal', row: 4, col: 11, neutrons: 35 },
+    { z: 30, symbol: 'Zn', name: 'Zinc', mass: 65.38, category: 'transition-metal', row: 4, col: 12, neutrons: 35 },
+    { z: 31, symbol: 'Ga', name: 'Gallium', mass: 69.72, category: 'post-transition', row: 4, col: 13, neutrons: 39 },
+    { z: 32, symbol: 'Ge', name: 'Germanium', mass: 72.63, category: 'metalloid', row: 4, col: 14, neutrons: 41 },
+    { z: 33, symbol: 'As', name: 'Arsenic', mass: 74.92, category: 'metalloid', row: 4, col: 15, neutrons: 42 },
+    { z: 34, symbol: 'Se', name: 'Selenium', mass: 78.97, category: 'nonmetal', row: 4, col: 16, neutrons: 45 },
+    { z: 35, symbol: 'Br', name: 'Bromine', mass: 79.90, category: 'halogen', row: 4, col: 17, neutrons: 45 },
+    { z: 36, symbol: 'Kr', name: 'Krypton', mass: 83.80, category: 'noble-gas', row: 4, col: 18, neutrons: 48 },
+    // ─── Period 5 ───
+    { z: 37, symbol: 'Rb', name: 'Rubidium', mass: 85.47, category: 'alkali-metal', row: 5, col: 1, neutrons: 48 },
+    { z: 38, symbol: 'Sr', name: 'Strontium', mass: 87.62, category: 'alkaline-earth', row: 5, col: 2, neutrons: 50 },
+    { z: 39, symbol: 'Y', name: 'Yttrium', mass: 88.91, category: 'transition-metal', row: 5, col: 3, neutrons: 50 },
+    { z: 40, symbol: 'Zr', name: 'Zirconium', mass: 91.22, category: 'transition-metal', row: 5, col: 4, neutrons: 51 },
+    { z: 41, symbol: 'Nb', name: 'Niobium', mass: 92.91, category: 'transition-metal', row: 5, col: 5, neutrons: 52 },
+    { z: 42, symbol: 'Mo', name: 'Molybdenum', mass: 95.95, category: 'transition-metal', row: 5, col: 6, neutrons: 54 },
+    { z: 43, symbol: 'Tc', name: 'Technetium', mass: 98, category: 'transition-metal', row: 5, col: 7, neutrons: 55 },
+    { z: 44, symbol: 'Ru', name: 'Ruthenium', mass: 101.07, category: 'transition-metal', row: 5, col: 8, neutrons: 57 },
+    { z: 45, symbol: 'Rh', name: 'Rhodium', mass: 102.91, category: 'transition-metal', row: 5, col: 9, neutrons: 58 },
+    { z: 46, symbol: 'Pd', name: 'Palladium', mass: 106.42, category: 'transition-metal', row: 5, col: 10, neutrons: 60 },
+    { z: 47, symbol: 'Ag', name: 'Silver', mass: 107.87, category: 'transition-metal', row: 5, col: 11, neutrons: 61 },
+    { z: 48, symbol: 'Cd', name: 'Cadmium', mass: 112.41, category: 'transition-metal', row: 5, col: 12, neutrons: 64 },
+    { z: 49, symbol: 'In', name: 'Indium', mass: 114.82, category: 'post-transition', row: 5, col: 13, neutrons: 66 },
+    { z: 50, symbol: 'Sn', name: 'Tin', mass: 118.71, category: 'post-transition', row: 5, col: 14, neutrons: 69 },
+    { z: 51, symbol: 'Sb', name: 'Antimony', mass: 121.76, category: 'metalloid', row: 5, col: 15, neutrons: 71 },
+    { z: 52, symbol: 'Te', name: 'Tellurium', mass: 127.60, category: 'metalloid', row: 5, col: 16, neutrons: 76 },
+    { z: 53, symbol: 'I', name: 'Iodine', mass: 126.90, category: 'halogen', row: 5, col: 17, neutrons: 74 },
+    { z: 54, symbol: 'Xe', name: 'Xenon', mass: 131.29, category: 'noble-gas', row: 5, col: 18, neutrons: 77 },
+    // ─── Period 6 ───
+    { z: 55, symbol: 'Cs', name: 'Caesium', mass: 132.91, category: 'alkali-metal', row: 6, col: 1, neutrons: 78 },
+    { z: 56, symbol: 'Ba', name: 'Barium', mass: 137.33, category: 'alkaline-earth', row: 6, col: 2, neutrons: 81 },
+    // Lanthanides (row 8 = separate display row)
+    { z: 57, symbol: 'La', name: 'Lanthanum', mass: 138.91, category: 'lanthanide', row: 8, col: 3, neutrons: 82 },
+    { z: 58, symbol: 'Ce', name: 'Cerium', mass: 140.12, category: 'lanthanide', row: 8, col: 4, neutrons: 82 },
+    { z: 59, symbol: 'Pr', name: 'Praseodymium', mass: 140.91, category: 'lanthanide', row: 8, col: 5, neutrons: 82 },
+    { z: 60, symbol: 'Nd', name: 'Neodymium', mass: 144.24, category: 'lanthanide', row: 8, col: 6, neutrons: 84 },
+    { z: 61, symbol: 'Pm', name: 'Promethium', mass: 145, category: 'lanthanide', row: 8, col: 7, neutrons: 84 },
+    { z: 62, symbol: 'Sm', name: 'Samarium', mass: 150.36, category: 'lanthanide', row: 8, col: 8, neutrons: 88 },
+    { z: 63, symbol: 'Eu', name: 'Europium', mass: 151.96, category: 'lanthanide', row: 8, col: 9, neutrons: 89 },
+    { z: 64, symbol: 'Gd', name: 'Gadolinium', mass: 157.25, category: 'lanthanide', row: 8, col: 10, neutrons: 93 },
+    { z: 65, symbol: 'Tb', name: 'Terbium', mass: 158.93, category: 'lanthanide', row: 8, col: 11, neutrons: 94 },
+    { z: 66, symbol: 'Dy', name: 'Dysprosium', mass: 162.50, category: 'lanthanide', row: 8, col: 12, neutrons: 97 },
+    { z: 67, symbol: 'Ho', name: 'Holmium', mass: 164.93, category: 'lanthanide', row: 8, col: 13, neutrons: 98 },
+    { z: 68, symbol: 'Er', name: 'Erbium', mass: 167.26, category: 'lanthanide', row: 8, col: 14, neutrons: 99 },
+    { z: 69, symbol: 'Tm', name: 'Thulium', mass: 168.93, category: 'lanthanide', row: 8, col: 15, neutrons: 100 },
+    { z: 70, symbol: 'Yb', name: 'Ytterbium', mass: 173.05, category: 'lanthanide', row: 8, col: 16, neutrons: 103 },
+    { z: 71, symbol: 'Lu', name: 'Lutetium', mass: 174.97, category: 'lanthanide', row: 8, col: 17, neutrons: 104 },
+    // Back to Period 6
+    { z: 72, symbol: 'Hf', name: 'Hafnium', mass: 178.49, category: 'transition-metal', row: 6, col: 4, neutrons: 106 },
+    { z: 73, symbol: 'Ta', name: 'Tantalum', mass: 180.95, category: 'transition-metal', row: 6, col: 5, neutrons: 108 },
+    { z: 74, symbol: 'W', name: 'Tungsten', mass: 183.84, category: 'transition-metal', row: 6, col: 6, neutrons: 110 },
+    { z: 75, symbol: 'Re', name: 'Rhenium', mass: 186.21, category: 'transition-metal', row: 6, col: 7, neutrons: 111 },
+    { z: 76, symbol: 'Os', name: 'Osmium', mass: 190.23, category: 'transition-metal', row: 6, col: 8, neutrons: 114 },
+    { z: 77, symbol: 'Ir', name: 'Iridium', mass: 192.22, category: 'transition-metal', row: 6, col: 9, neutrons: 115 },
+    { z: 78, symbol: 'Pt', name: 'Platinum', mass: 195.08, category: 'transition-metal', row: 6, col: 10, neutrons: 117 },
+    { z: 79, symbol: 'Au', name: 'Gold', mass: 196.97, category: 'transition-metal', row: 6, col: 11, neutrons: 118 },
+    { z: 80, symbol: 'Hg', name: 'Mercury', mass: 200.59, category: 'transition-metal', row: 6, col: 12, neutrons: 121 },
+    { z: 81, symbol: 'Tl', name: 'Thallium', mass: 204.38, category: 'post-transition', row: 6, col: 13, neutrons: 123 },
+    { z: 82, symbol: 'Pb', name: 'Lead', mass: 207.2, category: 'post-transition', row: 6, col: 14, neutrons: 125 },
+    { z: 83, symbol: 'Bi', name: 'Bismuth', mass: 208.98, category: 'post-transition', row: 6, col: 15, neutrons: 126 },
+    { z: 84, symbol: 'Po', name: 'Polonium', mass: 209, category: 'post-transition', row: 6, col: 16, neutrons: 125 },
+    { z: 85, symbol: 'At', name: 'Astatine', mass: 210, category: 'halogen', row: 6, col: 17, neutrons: 125 },
+    { z: 86, symbol: 'Rn', name: 'Radon', mass: 222, category: 'noble-gas', row: 6, col: 18, neutrons: 136 },
+    // ─── Period 7 ───
+    { z: 87, symbol: 'Fr', name: 'Francium', mass: 223, category: 'alkali-metal', row: 7, col: 1, neutrons: 136 },
+    { z: 88, symbol: 'Ra', name: 'Radium', mass: 226, category: 'alkaline-earth', row: 7, col: 2, neutrons: 138 },
+    // Actinides (row 9 = separate display row)
+    { z: 89, symbol: 'Ac', name: 'Actinium', mass: 227, category: 'actinide', row: 9, col: 3, neutrons: 138 },
+    { z: 90, symbol: 'Th', name: 'Thorium', mass: 232.04, category: 'actinide', row: 9, col: 4, neutrons: 142 },
+    { z: 91, symbol: 'Pa', name: 'Protactinium', mass: 231.04, category: 'actinide', row: 9, col: 5, neutrons: 140 },
+    { z: 92, symbol: 'U', name: 'Uranium', mass: 238.03, category: 'actinide', row: 9, col: 6, neutrons: 146 },
+    { z: 93, symbol: 'Np', name: 'Neptunium', mass: 237, category: 'actinide', row: 9, col: 7, neutrons: 144 },
+    { z: 94, symbol: 'Pu', name: 'Plutonium', mass: 244, category: 'actinide', row: 9, col: 8, neutrons: 150 },
+    { z: 95, symbol: 'Am', name: 'Americium', mass: 243, category: 'actinide', row: 9, col: 9, neutrons: 148 },
+    { z: 96, symbol: 'Cm', name: 'Curium', mass: 247, category: 'actinide', row: 9, col: 10, neutrons: 151 },
+    { z: 97, symbol: 'Bk', name: 'Berkelium', mass: 247, category: 'actinide', row: 9, col: 11, neutrons: 150 },
+    { z: 98, symbol: 'Cf', name: 'Californium', mass: 251, category: 'actinide', row: 9, col: 12, neutrons: 153 },
+    { z: 99, symbol: 'Es', name: 'Einsteinium', mass: 252, category: 'actinide', row: 9, col: 13, neutrons: 153 },
+    { z: 100, symbol: 'Fm', name: 'Fermium', mass: 257, category: 'actinide', row: 9, col: 14, neutrons: 157 },
+    { z: 101, symbol: 'Md', name: 'Mendelevium', mass: 258, category: 'actinide', row: 9, col: 15, neutrons: 157 },
+    { z: 102, symbol: 'No', name: 'Nobelium', mass: 259, category: 'actinide', row: 9, col: 16, neutrons: 157 },
+    { z: 103, symbol: 'Lr', name: 'Lawrencium', mass: 266, category: 'actinide', row: 9, col: 17, neutrons: 163 },
+    // Back to Period 7
+    { z: 104, symbol: 'Rf', name: 'Rutherfordium', mass: 267, category: 'transition-metal', row: 7, col: 4, neutrons: 163 },
+    { z: 105, symbol: 'Db', name: 'Dubnium', mass: 268, category: 'transition-metal', row: 7, col: 5, neutrons: 163 },
+    { z: 106, symbol: 'Sg', name: 'Seaborgium', mass: 269, category: 'transition-metal', row: 7, col: 6, neutrons: 163 },
+    { z: 107, symbol: 'Bh', name: 'Bohrium', mass: 270, category: 'transition-metal', row: 7, col: 7, neutrons: 163 },
+    { z: 108, symbol: 'Hs', name: 'Hassium', mass: 277, category: 'transition-metal', row: 7, col: 8, neutrons: 169 },
+    { z: 109, symbol: 'Mt', name: 'Meitnerium', mass: 278, category: 'transition-metal', row: 7, col: 9, neutrons: 169 },
+    { z: 110, symbol: 'Ds', name: 'Darmstadtium', mass: 281, category: 'transition-metal', row: 7, col: 10, neutrons: 171 },
+    { z: 111, symbol: 'Rg', name: 'Roentgenium', mass: 282, category: 'transition-metal', row: 7, col: 11, neutrons: 171 },
+    { z: 112, symbol: 'Cn', name: 'Copernicium', mass: 285, category: 'transition-metal', row: 7, col: 12, neutrons: 173 },
+    { z: 113, symbol: 'Nh', name: 'Nihonium', mass: 286, category: 'post-transition', row: 7, col: 13, neutrons: 173 },
+    { z: 114, symbol: 'Fl', name: 'Flerovium', mass: 289, category: 'post-transition', row: 7, col: 14, neutrons: 175 },
+    { z: 115, symbol: 'Mc', name: 'Moscovium', mass: 290, category: 'post-transition', row: 7, col: 15, neutrons: 175 },
+    { z: 116, symbol: 'Lv', name: 'Livermorium', mass: 293, category: 'post-transition', row: 7, col: 16, neutrons: 177 },
+    { z: 117, symbol: 'Ts', name: 'Tennessine', mass: 294, category: 'halogen', row: 7, col: 17, neutrons: 177 },
+    { z: 118, symbol: 'Og', name: 'Oganesson', mass: 294, category: 'noble-gas', row: 7, col: 18, neutrons: 176 },
+];
+
+// Build lookup by Z
+const ELEMENTS_BY_Z = {};
+ALL_ELEMENTS.forEach(el => { ELEMENTS_BY_Z[el.z] = el; });
+
+// All 118 elements are now viewable in the orbital viewer
+const MAX_VIEWABLE_Z = 118;

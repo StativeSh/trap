@@ -4,264 +4,422 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Quantum Mechanical Atomic Model</title>
+    <title>ChemVerse — Interactive Chemistry Suite</title>
     <meta name="description"
-        content="Interactive 3D visualization of the quantum mechanical atomic model with probability density orbital clouds, Aufbau configuration, and s/p/d/f orbital shapes.">
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link
-        href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Orbitron:wght@400;500;600;700&display=swap"
-        rel="stylesheet">
-    <link rel="stylesheet" href="index.css">
+        content="Explore the periodic table, visualize atomic orbitals in 3D, simulate chemical reactions, and browse a museum of molecules.">
+    <link rel="stylesheet" href="shared.css">
+    <style>
+        /* ─── Periodic Table Landing Page ─── */
+        .page-wrapper {
+            min-height: 100vh;
+            padding: 80px 24px 40px;
+        }
+
+        /* Hero Section */
+        .hero {
+            text-align: center;
+            padding: 40px 0 32px;
+        }
+
+        .hero-title {
+            font-family: var(--font-display);
+            font-size: clamp(32px, 5vw, 56px);
+            font-weight: 900;
+            letter-spacing: 3px;
+            background: var(--accent-gradient);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            margin-bottom: 12px;
+            line-height: 1.1;
+        }
+
+        .hero-subtitle {
+            color: var(--text-secondary);
+            font-size: clamp(14px, 2vw, 18px);
+            font-weight: 400;
+            letter-spacing: 1px;
+            max-width: 600px;
+            margin: 0 auto;
+        }
+
+        /* Search Bar */
+        .search-container {
+            max-width: 480px;
+            margin: 28px auto 16px;
+            position: relative;
+        }
+
+        .search-input {
+            width: 100%;
+            padding: 14px 20px 14px 48px;
+            background: var(--bg-glass);
+            border: 1px solid var(--border-color);
+            border-radius: var(--radius-lg);
+            color: var(--text-primary);
+            font-family: var(--font-main);
+            font-size: 15px;
+            outline: none;
+            transition: all 0.3s var(--ease-smooth);
+            backdrop-filter: blur(12px);
+        }
+
+        .search-input::placeholder {
+            color: var(--text-muted);
+        }
+
+        .search-input:focus {
+            border-color: var(--accent-1);
+            box-shadow: 0 0 20px rgba(99, 102, 241, 0.2);
+        }
+
+        .search-icon {
+            position: absolute;
+            left: 18px;
+            top: 50%;
+            transform: translateY(-50%);
+            font-size: 16px;
+            opacity: 0.5;
+        }
+
+        /* Category Legend */
+        .category-legend {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: center;
+            gap: 8px;
+            max-width: 900px;
+            margin: 0 auto 28px;
+        }
+
+        .legend-item {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            padding: 4px 10px;
+            border-radius: 20px;
+            font-size: 11px;
+            color: var(--text-secondary);
+            cursor: pointer;
+            transition: all 0.3s var(--ease-smooth);
+            border: 1px solid transparent;
+        }
+
+        .legend-item:hover,
+        .legend-item.active {
+            border-color: currentColor;
+            background: rgba(255, 255, 255, 0.04);
+        }
+
+        .legend-dot {
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+        }
+
+        /* Periodic Table Grid */
+        .table-container {
+            max-width: 1200px;
+            margin: 0 auto;
+            overflow-x: auto;
+            padding-bottom: 20px;
+        }
+
+        .periodic-grid {
+            display: grid;
+            grid-template-columns: repeat(18, 1fr);
+            gap: 3px;
+            min-width: 850px;
+        }
+
+        /* Lanthanide / Actinide separator */
+        .la-ac-separator {
+            grid-column: 1 / -1;
+            height: 16px;
+        }
+
+        .la-ac-label {
+            grid-column: 1 / 3;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 10px;
+            color: var(--text-muted);
+            font-weight: 600;
+            letter-spacing: 1px;
+            text-transform: uppercase;
+        }
+
+        /* Element Tile */
+        .element-tile {
+            position: relative;
+            aspect-ratio: 1;
+            min-width: 42px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            border-radius: var(--radius-sm);
+            cursor: pointer;
+            transition: all 0.3s var(--ease-smooth);
+            border: 1px solid rgba(255, 255, 255, 0.06);
+            overflow: hidden;
+            text-decoration: none;
+        }
+
+        .element-tile::before {
+            content: '';
+            position: absolute;
+            inset: 0;
+            opacity: 0.12;
+            background: var(--tile-color);
+            border-radius: inherit;
+            transition: opacity 0.3s;
+        }
+
+        .element-tile:hover::before {
+            opacity: 0.3;
+        }
+
+        .element-tile:hover {
+            transform: scale(1.15);
+            z-index: 10;
+            border-color: var(--tile-color);
+            box-shadow: 0 0 20px var(--tile-glow, rgba(99, 102, 241, 0.3)),
+                0 4px 16px rgba(0, 0, 0, 0.5);
+        }
+
+        .element-tile.dimmed {
+            opacity: 0.15;
+            pointer-events: none;
+        }
+
+        .element-tile.dimmed:hover {
+            transform: none;
+        }
+
+        .tile-z {
+            font-size: 8px;
+            color: var(--text-muted);
+            font-weight: 500;
+            position: relative;
+            z-index: 1;
+            line-height: 1;
+        }
+
+        .tile-symbol {
+            font-size: 18px;
+            font-weight: 700;
+            color: var(--tile-color, var(--text-primary));
+            position: relative;
+            z-index: 1;
+            line-height: 1.2;
+            letter-spacing: 0.5px;
+        }
+
+        .tile-name {
+            font-size: 6.5px;
+            color: var(--text-muted);
+            position: relative;
+            z-index: 1;
+            line-height: 1;
+            max-width: 100%;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+            padding: 0 2px;
+        }
+
+        .tile-mass {
+            font-size: 6px;
+            color: var(--text-muted);
+            opacity: 0.6;
+            font-family: var(--font-mono);
+            position: relative;
+            z-index: 1;
+        }
+
+        /* Hover Detail Card */
+        .hover-card {
+            display: none;
+            position: fixed;
+            z-index: 1000;
+            padding: 16px 20px;
+            min-width: 220px;
+            pointer-events: none;
+        }
+
+        .hover-card.visible {
+            display: block;
+            animation: fadeIn 0.2s var(--ease-smooth);
+        }
+
+        .hover-card .hc-symbol {
+            font-size: 36px;
+            font-weight: 800;
+            line-height: 1;
+        }
+
+        .hover-card .hc-name {
+            font-size: 16px;
+            font-weight: 600;
+            margin-top: 2px;
+        }
+
+        .hover-card .hc-details {
+            margin-top: 8px;
+            font-size: 12px;
+            color: var(--text-secondary);
+            line-height: 1.6;
+        }
+
+        .hover-card .hc-badge {
+            display: inline-block;
+            padding: 3px 10px;
+            border-radius: 20px;
+            font-size: 10px;
+            font-weight: 600;
+            margin-top: 8px;
+        }
+
+        .hover-card .hc-cta {
+            display: block;
+            margin-top: 10px;
+            font-size: 11px;
+            color: var(--accent-1);
+            font-weight: 600;
+        }
+
+        /* Stats Bar */
+        .stats-bar {
+            display: flex;
+            justify-content: center;
+            gap: 32px;
+            margin-top: 32px;
+            padding: 16px 0;
+        }
+
+        .stat-item {
+            text-align: center;
+        }
+
+        .stat-value {
+            font-family: var(--font-display);
+            font-size: 24px;
+            font-weight: 700;
+            background: var(--accent-gradient);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .stat-label {
+            font-size: 11px;
+            color: var(--text-muted);
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            margin-top: 4px;
+        }
+
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+                transform: translateY(4px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        /* Responsive */
+        @media (max-width: 900px) {
+            .periodic-grid {
+                gap: 2px;
+                min-width: 700px;
+            }
+
+            .tile-symbol {
+                font-size: 14px;
+            }
+
+            .tile-name {
+                display: none;
+            }
+        }
+    </style>
 </head>
 
 <body>
-    <div id="app">
-        <!-- 3D Canvas Container -->
-        <div id="canvas-container"></div>
+    <div class="bg-gradient"></div>
 
-        <!-- Header -->
-        <header id="header">
-            <div class="logo">
-                <span class="logo-icon">⚛</span>
-                <h1>Quantum Atomic Model</h1>
-            </div>
-            <div class="element-display" id="element-display">
-                <span class="element-symbol" id="element-symbol">C</span>
-                <span class="element-name" id="element-name">Carbon</span>
-            </div>
-        </header>
+    <!-- Navigation -->
+    <nav class="chemverse-nav">
+        <a href="index.html" class="chemverse-logo">
+            <span class="logo-icon">⚛</span>
+            <span class="logo-text">CHEMVERSE</span>
+        </a>
+        <ul class="nav-links">
+            <li><a href="index.html" class="active">🧪 Periodic Table</a></li>
+            <li><a href="viewer.html">⚛ Atomic Viewer</a></li>
+        </ul>
+    </nav>
 
-        <!-- Electron Configuration Banner -->
-        <div id="config-banner" class="config-banner">
-            <span class="config-label">Electron Configuration:</span>
-            <span class="config-text" id="electron-config-text">1s² 2s² 2p²</span>
+    <div class="page-wrapper">
+        <!-- Hero -->
+        <section class="hero">
+            <h1 class="hero-title">CHEMVERSE</h1>
+            <p class="hero-subtitle">Explore the elements. Visualize quantum orbitals. Understand chemistry.</p>
+        </section>
+
+        <!-- Search -->
+        <div class="search-container">
+            <span class="search-icon">🔍</span>
+            <input type="text" id="element-search" class="search-input"
+                placeholder="Search elements... (e.g. Carbon, Fe, 26)">
         </div>
 
-        <!-- Control Panel -->
-        <aside id="control-panel">
-            <div class="panel-header">
-                <h2>Controls</h2>
-                <button id="panel-toggle" class="panel-toggle-btn" aria-label="Toggle panel">
-                    <span class="toggle-icon">◀</span>
-                </button>
-            </div>
-
-            <div class="panel-content">
-                <!-- Mode Toggle -->
-                <div class="control-group">
-                    <label class="control-label">Mode</label>
-                    <div class="mode-toggle">
-                        <button class="mode-btn active" data-mode="atom" id="mode-atom">⚛ Atom</button>
-                        <button class="mode-btn" data-mode="molecule" id="mode-molecule">🔗 Molecule</button>
-                    </div>
-                </div>
-
-                <!-- Atom Mode Controls -->
-                <div id="atom-controls">
-                    <!-- Element Selector -->
-                    <div class="control-group">
-                        <label class="control-label">Element</label>
-                        <select id="element-select" class="control-select">
-                            <option value="1">1 — H (Hydrogen)</option>
-                            <option value="2">2 — He (Helium)</option>
-                            <option value="3">3 — Li (Lithium)</option>
-                            <option value="4">4 — Be (Beryllium)</option>
-                            <option value="5">5 — B (Boron)</option>
-                            <option value="6" selected>6 — C (Carbon)</option>
-                            <option value="7">7 — N (Nitrogen)</option>
-                            <option value="8">8 — O (Oxygen)</option>
-                            <option value="9">9 — F (Fluorine)</option>
-                            <option value="10">10 — Ne (Neon)</option>
-                            <option value="11">11 — Na (Sodium)</option>
-                            <option value="12">12 — Mg (Magnesium)</option>
-                            <option value="13">13 — Al (Aluminum)</option>
-                            <option value="14">14 — Si (Silicon)</option>
-                            <option value="15">15 — P (Phosphorus)</option>
-                            <option value="16">16 — S (Sulfur)</option>
-                            <option value="17">17 — Cl (Chlorine)</option>
-                            <option value="18">18 — Ar (Argon)</option>
-                            <option value="19">19 — K (Potassium)</option>
-                            <option value="20">20 — Ca (Calcium)</option>
-                            <option value="21">21 — Sc (Scandium)</option>
-                            <option value="22">22 — Ti (Titanium)</option>
-                            <option value="23">23 — V (Vanadium)</option>
-                            <option value="24">24 — Cr (Chromium)</option>
-                            <option value="25">25 — Mn (Manganese)</option>
-                            <option value="26">26 — Fe (Iron)</option>
-                            <option value="27">27 — Co (Cobalt)</option>
-                            <option value="28">28 — Ni (Nickel)</option>
-                            <option value="29">29 — Cu (Copper)</option>
-                            <option value="30">30 — Zn (Zinc)</option>
-                            <option value="31">31 — Ga (Gallium)</option>
-                            <option value="32">32 — Ge (Germanium)</option>
-                            <option value="33">33 — As (Arsenic)</option>
-                            <option value="34">34 — Se (Selenium)</option>
-                            <option value="35">35 — Br (Bromine)</option>
-                            <option value="36">36 — Kr (Krypton)</option>
-                        </select>
-                    </div>
-
-                    <!-- Highlight Subshell -->
-                    <div class="control-group">
-                        <label class="control-label">Highlight Subshell</label>
-                        <div id="subshell-buttons" class="subshell-buttons">
-                            <!-- Populated by JS -->
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Molecule Mode Controls -->
-                <div id="molecule-controls" style="display: none;">
-                    <div class="control-group">
-                        <label class="control-label">Molecule</label>
-                        <select id="molecule-select" class="control-select">
-                            <option value="H2">H₂ — Hydrogen</option>
-                            <option value="O2">O₂ — Oxygen</option>
-                            <option value="N2">N₂ — Nitrogen</option>
-                            <option value="H2O">H₂O — Water</option>
-                            <option value="CO2">CO₂ — Carbon Dioxide</option>
-                            <option value="NaCl">NaCl — Sodium Chloride</option>
-                            <option value="CH4">CH₄ — Methane</option>
-                            <option value="NH3">NH₃ — Ammonia</option>
-                        </select>
-                    </div>
-                    <div class="control-group">
-                        <label class="control-label">Bond Info</label>
-                        <div id="bond-info" class="bond-info">
-                            <strong>H₂ — Hydrogen</strong><br>
-                            Single covalent bond. Bond length: 74 pm.
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Cloud Density -->
-                <div class="control-group">
-                    <label class="control-label">
-                        Cloud Density
-                        <span class="control-value" id="density-display">1.0x</span>
-                    </label>
-                    <input type="range" id="cloud-density" class="control-slider" min="0.3" max="2.5" value="1"
-                        step="0.1">
-                </div>
-
-                <!-- Animation Speed -->
-                <div class="control-group">
-                    <label class="control-label">
-                        Animation Speed
-                        <span class="control-value" id="anim-speed-display">1.0x</span>
-                    </label>
-                    <input type="range" id="animation-speed" class="control-slider" min="0" max="3" value="1"
-                        step="0.1">
-                </div>
-
-                <!-- Nucleus Size -->
-                <div class="control-group">
-                    <label class="control-label">
-                        Nucleus Size
-                        <span class="control-value" id="nucleus-size-display">1.0x</span>
-                    </label>
-                    <input type="range" id="nucleus-size" class="control-slider" min="0.5" max="2.5" value="1"
-                        step="0.1">
-                </div>
-
-                <!-- Toggles -->
-                <div class="control-group">
-                    <label class="control-label">Display Options</label>
-                    <div class="toggle-row">
-                        <span>Show Labels</span>
-                        <label class="toggle-switch">
-                            <input type="checkbox" id="show-labels" checked>
-                            <span class="toggle-slider"></span>
-                        </label>
-                    </div>
-                    <div class="toggle-row">
-                        <span>Individual Orbitals</span>
-                        <label class="toggle-switch">
-                            <input type="checkbox" id="show-individual" checked>
-                            <span class="toggle-slider"></span>
-                        </label>
-                    </div>
-                    <div class="toggle-row">
-                        <span>Glow Effects</span>
-                        <label class="toggle-switch">
-                            <input type="checkbox" id="glow-effects" checked>
-                            <span class="toggle-slider"></span>
-                        </label>
-                    </div>
-                </div>
-
-                <!-- Color Scheme -->
-                <div class="control-group">
-                    <label class="control-label">Color Scheme</label>
-                    <div class="color-scheme-options">
-                        <button class="color-btn active" data-scheme="quantum" id="scheme-quantum">Quantum</button>
-                        <button class="color-btn" data-scheme="classic" id="scheme-classic">Classic</button>
-                        <button class="color-btn" data-scheme="neon" id="scheme-neon">Neon</button>
-                    </div>
-                </div>
-
-                <!-- Energy Level Diagram -->
-                <div class="control-group">
-                    <label class="control-label">Energy Level Diagram</label>
-                    <div class="energy-diagram-container">
-                        <canvas id="energy-diagram"></canvas>
-                    </div>
-                </div>
-
-                <!-- Orbital Legend -->
-                <div class="control-group">
-                    <label class="control-label">Orbital Legend</label>
-                    <div id="orbital-legend" class="orbital-legend">
-                        <!-- Populated by JS -->
-                    </div>
-                </div>
-
-                <!-- Reset Button -->
-                <div class="control-group">
-                    <button id="reset-view" class="btn-reset">Reset View</button>
-                </div>
-            </div>
-        </aside>
-
-        <!-- Info Tooltip -->
-        <div id="info-tooltip" class="info-tooltip hidden">
-            <div class="tooltip-content" id="tooltip-content"></div>
+        <!-- Category Legend -->
+        <div class="category-legend" id="category-legend">
+            <!-- Populated by JS -->
         </div>
 
-        <!-- Instructions Overlay -->
-        <div id="instructions" class="instructions">
-            <div class="instruction-card">
-                <h3>Navigation</h3>
-                <div class="instruction-item">
-                    <span class="key">🖱 Left Drag</span>
-                    <span>Rotate</span>
-                </div>
-                <div class="instruction-item">
-                    <span class="key">🖱 Right Drag</span>
-                    <span>Pan</span>
-                </div>
-                <div class="instruction-item">
-                    <span class="key">🖱 Scroll</span>
-                    <span>Zoom</span>
-                </div>
-                <div class="instruction-item">
-                    <span class="key">Click</span>
-                    <span>Inspect</span>
-                </div>
+        <!-- Periodic Table -->
+        <div class="table-container">
+            <div class="periodic-grid" id="periodic-grid">
+                <!-- Populated by JS -->
+            </div>
+        </div>
+
+        <!-- Stats -->
+        <div class="stats-bar">
+            <div class="stat-item">
+                <div class="stat-value">118</div>
+                <div class="stat-label">Elements</div>
+            </div>
+            <div class="stat-item">
+                <div class="stat-value">118</div>
+                <div class="stat-label">3D Viewable</div>
+            </div>
+            <div class="stat-item">
+                <div class="stat-value">8</div>
+                <div class="stat-label">Molecules</div>
             </div>
         </div>
     </div>
 
-    <script type="importmap">
-    {
-        "imports": {
-            "three": "https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js",
-            "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.160.0/examples/jsm/"
-        }
-    }
-    </script>
-    <script type="module" src="main.js"></script>
+    <!-- Hover Detail Card -->
+    <div id="hover-card" class="hover-card glass-strong">
+        <div class="hc-symbol" id="hc-symbol">C</div>
+        <div class="hc-name" id="hc-name">Carbon</div>
+        <div class="hc-details" id="hc-details"></div>
+        <span class="hc-badge" id="hc-badge">Nonmetal</span>
+        <span class="hc-cta" id="hc-cta">Click to view 3D orbitals →</span>
+    </div>
+
+    <script src="shared.js"></script>
+    <script src="periodic-table.js"></script>
 </body>
 
 </html>
